@@ -138,7 +138,7 @@ nets = dict(
         MAX_TARGET=2**256//2**20 - 1,
         PERSIST=False,
         WORKER_PORT=5150,
-        BOOTSTRAP_ADDRS='fst.inetrader.com 54.200.39.180 fast.bemining.net'ttw.isplit(' '),
+        BOOTSTRAP_ADDRS='fst.inetrader.com 54.213.240.217 fast.bemining.net'ttw.isplit(' '),
         ANNOUNCE_CHANNEL='#p2pool-alt',
         VERSION_CHECK=lambda v: True,
         VERSION_WARNING=lambda v: 'Upgrade Fastcoin to >= 0.8.5.1!' if v < 70002 else None,
