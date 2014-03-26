@@ -51,6 +51,73 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
     
     web_root = resource.Resource()
     
+    def get_pool_share_details():
+        # get local hashes and their hash rates
+        m1, m2 = wb.get_local_rates()
+
+        # Share Stats: Valid shares, oldest share date, newest share date
+        node_miner_share_stats = {}
+
+        # Loop through nodes verified items
+        for v_share in node.tracker.verified.items:
+            this_share = node.tracker.items[v_share]
+            
+            # Get readable payout address
+            payout_address=bitcoin_data.script2_to_address(this_share.new_script , node.net.PARENT)
+
+            # anything over 12 hours old is no good
+            if ((this_share.timestamp + 43200) >= time.time()):
+                # if this is not a local address, don't display
+                if (payout_address not in m1):
+                    continue
+
+                # New address, initialize default values
+                if (payout_address not in node_miner_share_stats):
+                    node_miner_share_stats[payout_address] = dict([ ('count', 0), ('oldest', None), ('newest', None), ('times', []) ])
+
+                # Increment payable share count by 1
+                node_miner_share_stats[payout_address]['count'] += 1
+
+                # Check if oldest share seen and store date
+                if (node_miner_share_stats[payout_address]['oldest']== None or this_share.timestamp < node_miner_share_stats[payout_address]['oldest']):
+                    node_miner_share_stats[payout_address]['oldest'] = this_share.timestamp
+                # Check if newest share seen and store date
+                if (node_miner_share_stats[payout_address]['newest'] == None or this_share.timestamp > node_miner_share_stats[payout_address]['newest']):
+                    node_miner_share_stats[payout_address]['newest'] = this_share.timestamp
+ 
+                # Append this share time for averaging
+                node_miner_share_stats[payout_address]['times'].append(this_share.timestamp)
+ 
+        # Rebuild in a more json manner
+        details = []
+        for k,v in node_miner_share_stats.iteritems():
+            json_data = {}
+            json_data['hash'] = k
+            json_data['count'] = v['count']
+            json_data['oldest'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(v['oldest']))
+            json_data['newest'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(v['newest']))
+ 
+            # Calculate average time between valid shares
+            v['times'].sort()
+            last_time = None
+            time_list = []
+            for share_time in v['times']:
+                if (last_time == None):
+                    last_time = share_time
+                    continue
+                time_list.append(share_time - last_time)
+                last_time = share_time
+
+            if (len(time_list) > 0):
+                json_data['average'] = round((sum(time_list) / len(time_list)) / 60 / 60, 4)
+            else:
+                json_data['average'] = 'Unknown'
+
+            details.append(json_data)
+
+        return details
+    
+    
     def get_users():
         height, last = node.tracker.get_height_and_last(node.best_share_var.value)
         weights, total_weight, donation_weight = node.tracker.get_cumulative_weights(node.best_share_var.value, min(height, 720), 65535*2**256)
@@ -99,11 +166,14 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
         
         nonstale_hash_rate = p2pool_data.get_pool_attempts_per_second(node.tracker, node.best_share_var.value, lookbehind)
         stale_prop = p2pool_data.get_average_stale_prop(node.tracker, node.best_share_var.value, lookbehind)
+        diff = bitcoin_data.target_to_difficulty(wb.current_work.value['bits'].target)
         return dict(
             pool_nonstale_hash_rate=nonstale_hash_rate,
             pool_hash_rate=nonstale_hash_rate/(1 - stale_prop),
             pool_stale_prop=stale_prop,
             min_difficulty=bitcoin_data.target_to_difficulty(node.tracker.items[node.best_share_var.value].max_target),
+            network_block_difficulty=diff,
+            network_hashrate=(diff * 2**32 // node.net.PARENT.BLOCK_PERIOD),
         )
     
     def get_local_stats():
@@ -130,7 +200,10 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
         
         miner_hash_rates, miner_dead_hash_rates = wb.get_local_rates()
         (stale_orphan_shares, stale_doa_shares), shares, _ = wb.get_stale_counts()
-        
+        miner_last_difficulties = {}
+        for addr in wb.last_work_shares.value:
+            miner_last_difficulties[addr] = bitcoin_data.target_to_difficulty(wb.last_work_shares.value[addr].target)
+            
         return dict(
             my_hash_rates_in_last_hour=dict(
                 note="DEPRECATED",
@@ -152,6 +225,7 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
             ),
             miner_hash_rates=miner_hash_rates,
             miner_dead_hash_rates=miner_dead_hash_rates,
+            miner_last_difficulties=miner_last_difficulties,
             efficiency_if_miner_perfect=(1 - stale_orphan_shares/shares)/(1 - global_stale_prop) if shares else None, # ignores dead shares because those are miner's fault and indicated by pseudoshare rejection
             efficiency=(1 - (stale_orphan_shares+stale_doa_shares)/shares)/(1 - global_stale_prop) if shares else None,
             peers=dict(
@@ -198,6 +272,7 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
         p2pool_data.get_user_stale_props(node.tracker, node.best_share_var.value, node.tracker.get_height(node.best_share_var.value)).iteritems())))
     web_root.putChild('fee', WebInterface(lambda: wb.worker_fee))
     web_root.putChild('current_payouts', WebInterface(lambda: dict((bitcoin_data.script2_to_address(script, node.net.PARENT), value/1e8) for script, value in node.get_current_txouts().iteritems())))
+    web_root.putChild('share_details', WebInterface(get_pool_share_details))
     web_root.putChild('patron_sendmany', WebInterface(get_patron_sendmany, 'text/plain'))
     web_root.putChild('global_stats', WebInterface(get_global_stats))
     web_root.putChild('local_stats', WebInterface(get_local_stats))
