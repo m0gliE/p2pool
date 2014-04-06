@@ -136,13 +136,31 @@ nets = dict(
         P2P_PORT=23660,
         MIN_TARGET=0,
         MAX_TARGET=2**256//2**20 - 1,
-        PERSIST=True,
+        PERSIST=False,
         WORKER_PORT=5150,
         BOOTSTRAP_ADDRS='fst.inetrader.com'.split(' '),
-        ANNOUNCE_CHANNEL='#p2pool-alt',
+        ANNOUNCE_CHANNEL='#p2pool-fst',
         VERSION_CHECK=lambda v: True,
         VERSION_WARNING=lambda v: 'Upgrade Fastcoin to >= 0.8.5.1!' if v < 70002 else None,
     ),
+     diamond=math.Object(
+            PARENT=networks.nets['diamond'],
+            SHARE_PERIOD=30, # seconds target spacing
+            CHAIN_LENGTH=24*60*60//10, # shares
+            REAL_CHAIN_LENGTH=24*60*60//10, # shares
+            TARGET_LOOKBEHIND=100, # shares coinbase maturity
+            SPREAD=30, # blocks
+            IDENTIFIER='6469616d6f6e6473'.decode('hex'),
+            PREFIX='6269676d6f6e6579'.decode('hex'),
+            P2P_PORT=17771,
+            MIN_TARGET=0,
+    	    MAX_TARGET=2**256//2**20 - 1,
+            PERSIST=False,
+            WORKER_PORT=17777,
+            BOOTSTRAP_ADDRS='63.170.87.173'.split(' '),
+            ANNOUNCE_CHANNEL='#p2pool-alt',
+            VERSION_CHECK=lambda v: True,
+	), 
 
 )
 for net_name, net in nets.iteritems():
