@@ -143,6 +143,25 @@ nets = dict(
         VERSION_CHECK=lambda v: True,
         VERSION_WARNING=lambda v: 'Upgrade Fastcoin to >= 0.8.5.1!' if v < 70002 else None,
     ),
+    zimstake=math.Object(
+        PARENT=networks.nets['zimstake'],
+        SHARE_PERIOD=30, # seconds
+        CHAIN_LENGTH=60*60//30, # shares
+        REAL_CHAIN_LENGTH=60*60//30, # shares
+        TARGET_LOOKBEHIND=200, # shares
+        SPREAD=15, # blocks
+        IDENTIFIER='c21d2323b5b7a35e'.decode('hex'),
+        PREFIX='c323d92112a2b4a1'.decode('hex'),
+        P2P_PORT=21125,
+        MIN_TARGET=0,
+        MAX_TARGET=2**256//2**32 - 1,
+        PERSIST=False,
+        WORKER_PORT=21120,
+        BOOTSTRAP_ADDRS='zs.crypto.land'.split(' '),
+        ANNOUNCE_CHANNEL='#p2pool-alt',
+        VERSION_CHECK=lambda v: True,
+        VERSION_WARNING=lambda v: 'Upgrade Zimstake to >= 1.0.0.0!' if v < 60000 else None,
+    ),
 
 )
 for net_name, net in nets.iteritems():
