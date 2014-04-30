@@ -214,7 +214,7 @@ nets = dict(
         ADDRESS_VERSION=32,
         RPC_PORT=12126,
         RPC_CHECK=defer.inlineCallbacks(lambda bitcoind: defer.returnValue(
-            'zimstakecoinaddress' in (yield bitcoind.rpc_help()) and
+            'zimstakeaddress' in (yield bitcoind.rpc_help()) and
             not (yield bitcoind.rpc_getinfo())['testnet']
         )),
         SUBSIDY_FUNC=lambda height: 512*100000000,
