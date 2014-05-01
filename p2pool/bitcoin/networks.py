@@ -224,7 +224,7 @@ nets = dict(
         CONF_FILE_FUNC=lambda: os.path.join(os.path.join(os.environ['APPDATA'], 'Zimstake') if platform.system() == 'Windows' else os.path.expanduser('~/Library/Application Support/Zimstake/') if platform.system() == 'Darwin' else os.path.expanduser('~/.zimstake'), 'zimstake.conf'),
         BLOCK_EXPLORER_URL_PREFIX='http://explore.zimstake.us/block/',
         ADDRESS_EXPLORER_URL_PREFIX='http://explore.zimstake.us/address/',
-        TX_EXPLORER_URL_PREFIX='http://explore.zimstake.us/tx/',
+        TX_EXPLORER_URL_PREFIX='http://explore.zimstake.us/index.php?transaction=',
         SANE_TARGET_RANGE=(2**256//2**32//1000 - 1, 2**256//2**32 - 1),
         DUMB_SCRYPT_DIFF=1,
         DUST_THRESHOLD=0.1e8,
