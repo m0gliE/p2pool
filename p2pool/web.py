@@ -348,9 +348,13 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
     new_root.putChild('log', WebInterface(lambda: stat_log))
     
     def get_share(share_hash_str):
-        if int(share_hash_str, 16) not in node.tracker.items:
+        try:
+            if int(share_hash_str, 16) not in node.tracker.items:
+                return None
+        except ValueError:
             return None
         share = node.tracker.items[int(share_hash_str, 16)]
+        other_tx_hashes = share.get_other_tx_hashes(node.tracker)
         
         return dict(
             parent='%064x' % share.previous_hash,
