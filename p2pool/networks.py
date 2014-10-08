@@ -143,6 +143,24 @@ nets = dict(
         VERSION_CHECK=lambda v: True,
         VERSION_WARNING=lambda v: 'Upgrade Fastcoin to >= 0.8.5.1!' if v < 70002 else None,
     ),
+    royalcoin=math.Object(
+        PARENT=networks.nets['royalcoin'],
+        SHARE_PERIOD=60, # seconds target spacing
+        CHAIN_LENGTH=24*60*60//10, # shares
+        REAL_CHAIN_LENGTH=24*60*60//10, # shares
+        TARGET_LOOKBEHIND=70, # shares coinbase maturity
+        SPREAD=120, # blocks
+        IDENTIFIER='f143F5b8c6924210'.decode('hex'),
+        PREFIX='c387192ba6d4729a'.decode('hex'),
+        P2P_PORT=9779,
+        MIN_TARGET=0,
+        MAX_TARGET=2**256//2**20 - 1,
+        PERSIST=False,
+        WORKER_PORT=9771,
+        BOOTSTRAP_ADDRS='63.170.87.173'.split(' '),
+        ANNOUNCE_CHANNEL='#p2pool-ryl',
+        VERSION_CHECK=lambda v: True,
+    ),
 
 )
 for net_name, net in nets.iteritems():
